@@ -1,0 +1,49 @@
+version: '3.7'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:13.4-alpine
+    restart: always
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=priori
+    logging:
+      options:
+        max-size: 20m
+        max-file: "3"
+    volumes:
+      - ./db:/var/lib/postgres/data
+    networks:
+      - test
+
+  app-dev:
+    restart: always
+    container_name: app-dev
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - postgres
+    volumes:
+      - .:/code
+      - ./package.json:/code/package.json
+      - ./package-lock.json:/code/package-lock.json
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=postgres
+      - DIALECT=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=priori
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - test
+  
+networks:
+  test:
+    driver: bridge
